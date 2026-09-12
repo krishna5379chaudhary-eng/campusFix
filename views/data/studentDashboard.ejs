@@ -1,0 +1,92 @@
+<%- include("../includes/head.ejs") %>
+<%- include("../includes/navbar.ejs") %>
+
+<link rel="stylesheet" href="/studentDashboard.css">
+
+<div class="container dashboard-container">
+
+<h1 class="dashboard-title">Student Dashboard</h1>
+
+<p>
+    <strong>Student ID:</strong> <%= studentId %>
+</p>
+
+<div class="mt-4">
+
+    <a
+        href="/complaints/new?studentId=<%= studentId %>"
+        class="btn btn-primary me-2"
+    >
+        Report a Problem
+    </a>
+
+    <a
+        href="/student?studentId=<%= studentId %>"
+        class="btn btn-secondary"
+    >
+        My Complaints
+    </a>
+
+</div>
+
+<h3 class="mt-5">Recent Complaints</h3>
+
+<% if (complaints.length === 0) { %>
+
+    <p class="text-muted mt-3">
+        No complaints found.
+    </p>
+
+<% } %>
+
+<% complaints.forEach(complaint => { %>
+
+    <div class="card mt-3 dashboard-card">
+
+        <div class="card-body">
+
+            <h5><%= complaint.title %></h5>
+
+            <p><%= complaint.location %></p>
+
+            <% if (complaint.status === "Resolved") { %>
+
+                <span class="badge bg-success">
+                    Completed
+                </span>
+
+            <% } else { %>
+
+                <span class="badge bg-warning">
+                    <%= complaint.status %>
+                </span>
+
+            <% } %>
+
+            <a
+                href="/complaints/<%= complaint._id %>"
+                class="btn btn-sm btn-primary ms-2"
+            >
+                View Details
+            </a>
+
+            <% if (complaint.image) { %>
+
+                <a
+                    href="/complaints/<%= complaint._id %>/photo"
+                    class="btn btn-sm btn-secondary ms-2"
+                >
+                    View Photo
+                </a>
+
+            <% } %>
+
+        </div>
+
+    </div>
+
+<% }) %>
+
+</div>
+
+<%- include("../includes/footer.ejs") %>

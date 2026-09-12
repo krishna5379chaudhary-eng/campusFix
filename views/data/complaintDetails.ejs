@@ -1,0 +1,55 @@
+<%- include("../includes/head.ejs") %>
+<%- include("../includes/navbar.ejs") %>
+
+<link rel="stylesheet" href="/complaintDetails.css">
+
+<div class="container mt-5">
+
+<h1>Complaint Details</h1>
+
+<div class="card mt-4 details-card">
+
+    <div class="card-body">
+
+        <h3><%= complaint.title %></h3>
+
+        <p>
+            <strong>Complaint ID:</strong>
+            <%= complaint._id %>
+        </p>
+
+        <p>
+            <strong>Category:</strong>
+            <%= complaint.category %>
+        </p>
+
+        <p>
+            <strong>Location:</strong>
+            <%= complaint.location %>
+        </p>
+
+        <p>
+            <strong>Description:</strong>
+            <%= complaint.description %>
+        </p>
+
+        <p>
+            <strong>Department:</strong>
+            <%= complaint.department %>
+        </p>
+
+        <p>
+            <strong>Status:</strong>
+
+            <span class="badge bg-warning status-badge">
+                <%= complaint.status %>
+            </span>
+        </p>
+
+    </div>
+
+</div>
+
+</div>
+
+<%- include("../includes/footer.ejs") %>

@@ -1,0 +1,36 @@
+body {
+background-color: #f8f9fa;
+}
+
+.admin-container {
+padding-top: 45px;
+}
+
+.admin-title {
+font-weight: 700;
+}
+
+.admin-card {
+border: none;
+border-radius: 14px;
+}
+
+.admin-card .card-body {
+padding: 25px;
+}
+
+.table-container {
+background-color: white;
+border-radius: 14px;
+padding: 20px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.table th {
+font-weight: 600;
+}
+
+.status-badge {
+border-radius: 20px;
+padding: 6px 12px;
+}

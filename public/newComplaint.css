@@ -1,0 +1,35 @@
+body {
+background-color: #f8f9fa;
+}
+
+.complaint-container {
+max-width: 750px;
+margin: 50px auto;
+}
+
+.complaint-card {
+border: none;
+border-radius: 15px;
+}
+
+.complaint-card .card-body {
+padding: 35px;
+}
+
+.complaint-title {
+font-weight: 700;
+}
+
+.form-label {
+font-weight: 500;
+}
+
+.form-control,
+.form-select {
+border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+box-shadow: none;
+}

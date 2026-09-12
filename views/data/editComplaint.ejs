@@ -1,0 +1,134 @@
+<%- include("../includes/head.ejs") %>
+<%- include("../includes/navbar.ejs") %>
+
+<link rel="stylesheet" href="/editComplaint.css">
+
+<div class="container mt-5">
+
+
+<h1>Edit Complaint</h1>
+
+<div class="card mt-4">
+
+    <div class="card-body">
+
+        <h3><%= complaint.title %></h3>
+
+        <p>
+            <strong>Complaint ID:</strong>
+            <%= complaint.complaintId %>
+        </p>
+
+        <p>
+            <strong>Category:</strong>
+            <%= complaint.category %>
+        </p>
+
+        <p>
+            <strong>Location:</strong>
+            <%= complaint.location %>
+        </p>
+
+        <p>
+            <strong>Description:</strong>
+            <%= complaint.description %>
+        </p>
+
+        <form
+            action="/admin/complaints/<%= complaint._id %>"
+            method="POST"
+        >
+
+            <input type="hidden" name="_method" value="PATCH">
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Department
+                </label>
+
+                <select name="department" class="form-select" required>
+
+                    <option value="Electricity"
+                        <%= complaint.department === "Electricity" ? "selected" : "" %>>
+                        Electricity
+                    </option>
+
+                    <option value="Water"
+                        <%= complaint.department === "Water" ? "selected" : "" %>>
+                        Water
+                    </option>
+
+                    <option value="Cleanliness"
+                        <%= complaint.department === "Cleanliness" ? "selected" : "" %>>
+                        Cleanliness
+                    </option>
+
+                    <option value="Maintenance"
+                        <%= complaint.department === "Maintenance" ? "selected" : "" %>>
+                        Maintenance
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Status
+                </label>
+
+                <select name="status" class="form-select" required>
+
+                    <option value="Pending"
+                        <%= complaint.status === "Pending" ? "selected" : "" %>>
+                        Pending
+                    </option>
+
+                    <option value="Assigned"
+                        <%= complaint.status === "Assigned" ? "selected" : "" %>>
+                        Assigned
+                    </option>
+
+                    <option value="In Progress"
+                        <%= complaint.status === "In Progress" ? "selected" : "" %>>
+                        In Progress
+                    </option>
+
+                    <option value="Resolved"
+                        <%= complaint.status === "Resolved" ? "selected" : "" %>>
+                        Resolved
+                    </option>
+
+                </select>
+
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Update Complaint
+            </button>
+
+        </form>
+
+        <form
+            action="/admin/complaints/<%= complaint._id %>"
+            method="POST"
+            class="mt-3"
+        >
+
+            <input type="hidden" name="_method" value="DELETE">
+
+            <button type="submit" class="btn btn-danger">
+                Delete Complaint
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</div>
+
+<%- include("../includes/footer.ejs") %>

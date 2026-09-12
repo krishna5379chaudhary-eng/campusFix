@@ -1,0 +1,38 @@
+body {
+background-color: #f8f9fa;
+}
+
+.dashboard-container {
+padding-top: 50px;
+}
+
+.dashboard-title {
+font-weight: 700;
+}
+
+.dashboard-card {
+border: none;
+border-radius: 14px;
+transition: 0.2s;
+}
+
+.dashboard-card:hover {
+transform: translateY(-3px);
+}
+
+.dashboard-card .card-body {
+padding: 25px;
+}
+
+.stat-number {
+font-size: 2rem;
+font-weight: 700;
+}
+
+.stat-label {
+color: #6c757d;
+}
+
+.action-btn {
+border-radius: 8px;
+}

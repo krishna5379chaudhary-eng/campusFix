@@ -1,0 +1,12 @@
+.login-container {
+margin-top: 80px;
+}
+
+.login-card {
+border: none;
+border-radius: 12px;
+}
+
+.login-card h2 {
+font-weight: 600;
+}

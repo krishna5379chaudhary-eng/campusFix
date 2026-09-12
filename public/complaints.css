@@ -1,0 +1,39 @@
+body {
+background-color: #f8f9fa;
+}
+
+.complaints-container {
+padding-top: 45px;
+}
+
+.complaints-title {
+font-weight: 700;
+}
+
+.complaint-card {
+border: none;
+border-radius: 14px;
+transition: 0.2s;
+}
+
+.complaint-card:hover {
+transform: translateY(-3px);
+}
+
+.complaint-card .card-body {
+padding: 25px;
+}
+
+.complaint-category {
+color: #6c757d;
+font-size: 0.9rem;
+}
+
+.complaint-location {
+font-size: 0.9rem;
+}
+
+.status-badge {
+border-radius: 20px;
+padding: 6px 12px;
+}

@@ -1,0 +1,36 @@
+<%- include("../includes/head.ejs") %>
+<%- include("../includes/navbar.ejs") %>
+
+<link rel="stylesheet" href="/viewimage.css">
+
+<div class="container photo-container">
+
+<h1 class="photo-title">Complaint Photo</h1>
+
+<div class="card photo-card shadow">
+
+    <div class="card-body text-center">
+
+        <h4><%= complaint.title %></h4>
+
+        <% if (complaint.image) { %>
+
+            <img src="<%= complaint.image %>" class="complaint-image" alt="Complaint photo">
+
+        <% } else { %>
+
+            <p class="text-muted mt-4">No photo uploaded for this complaint.</p>
+
+        <% } %>
+
+        <a href="/complaints/<%= complaint._id %>" class="btn btn-primary mt-4">
+            Back to Complaint
+        </a>
+
+    </div>
+
+</div>
+
+</div>
+
+<%- include("../includes/footer.ejs") %>
