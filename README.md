@@ -1,1427 +1,815 @@
 # CampusFix
 
-CampusFix is a web-based campus complaint management system.
+CampusFix is a web-based campus complaint management system that allows students to report campus problems and track their status. Administrators can view, manage, assign, update, and resolve complaints from an admin dashboard.
 
-Students can:
+The goal of CampusFix is to make campus problem reporting more organized, transparent, and trackable.
 
-* Enter their Student ID
-* Report campus problems
-* Upload a photo
-* View their complaints
+## Features
+
+### Student
+
+* Student login
+* Student-specific dashboard
+* Submit campus complaints
+* Select complaint category
+* Add location and description
+* Upload an image with a complaint
+* View previously submitted complaints
 * Track complaint status
-* View the uploaded complaint photo
+* View complaint details
 
-Admins can:
+### Admin
 
+* Admin login
+* Protected admin dashboard
 * View all complaints
-* Assign a department
-* Change complaint status
+* View individual complaint details
+* Assign complaints to departments
+* Update complaint status
 * Delete complaints
+* View complaint statistics
 
----
+### Authentication & Authorization
 
-# 1. Project Structure
+* Login using Student ID/Admin ID and password
+* Passwords are stored using bcrypt hashing
+* Express sessions are used to maintain login state
+* Sessions are stored in MongoDB using `connect-mongo`
+* Admin routes are protected using authorization middleware
+* Student routes are protected from unauthorized access
+* Students cannot access admin functionality
 
-hack/
+## Complaint Status
+
+A complaint can have one of the following statuses:
+
+* `Pending` — Complaint has been submitted but not assigned
+* `Assigned` — Complaint has been assigned to a department
+* `In Progress` — Work on the complaint has started
+* `Resolved` — The problem has been resolved
+
+## Technology Stack
+
+### Backend
+
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+
+### Frontend
+
+* EJS
+* Bootstrap
+* HTML
+* CSS
+
+### Authentication
+
+* Express Session
+* Connect Mongo
+* bcrypt
+
+### Other Packages
+
+* Multer — image uploads
+* Joi — request validation
+* Method Override — PUT/PATCH/DELETE requests from forms
+* ejs-mate — EJS layouts
+* wrapAsync — async error handling
+
+## Project Structure
+
+```text
+CampusFix/
 │
 ├── app.js
-├── schema.js
 ├── package.json
 ├── package-lock.json
+├── schema.js
+├── README.md
+│
+├── middleware/
+│   └── auth.js
 │
 ├── models/
-│   └── complaint.js
+│   ├── complaint.js
+│   └── user.js
+│
+├── routes/
+│   ├── auth.js
+│   ├── complaints.js
+│   └── admin.js
 │
 ├── utils/
 │   ├── ExpressError.js
-│   ├── wrapAsync.js
-│   ├── validateComplaint.js
-│   └── validateComplaintUpdate.js
+│   └── wrapAsync.js
 │
 ├── public/
-│   ├── style.css
-│   ├── index.css
-│   ├── login.css
-│   ├── complaints.css
-│   ├── complaintDetails.css
-│   ├── editComplaint.css
-│   ├── newComplaint.css
-│   ├── studentDashboard.css
-│   ├── adminDashboard.css
-│   ├── viewimage.css
-│   └── uploads/
+│   ├── uploads/
+│   └── style.css
 │
 └── views/
-├── data/
-│   ├── index.ejs
-│   ├── login.ejs
-│   ├── newComplaint.ejs
-│   ├── studentDashboard.ejs
-│   ├── complaints.ejs
-│   ├── complaintDetails.ejs
-│   ├── editComplaint.ejs
-│   └── viewimage.ejs
-│
-├── includes/
-│   ├── head.ejs
-│   ├── navbar.ejs
-│   └── footer.ejs
-│
-└── layouts/
-└── boilerplate.ejs
+    ├── data/
+    │   ├── login.ejs
+    │   ├── studentDashboard.ejs
+    │   ├── adminDashboard.ejs
+    │   ├── newComplaint.ejs
+    │   ├── complaints.ejs
+    │   ├── complaintDetails.ejs
+    │   ├── editComplaint.ejs
+    │   └── viewimage.ejs
+    │
+    ├── includes/
+    │   ├── head.ejs
+    │   ├── navbar.ejs
+    │   └── footer.ejs
+    │
+    └── layouts/
+        └── boilerplate.ejs
+```
+
+## File and Folder Explanation
+
+### `app.js`
+
+This is the main Express application file.
+
+It:
+
+* Creates the Express application
+* Connects to MongoDB
+* Configures EJS
+* Serves static files
+* Parses form and JSON data
+* Configures method override
+* Configures Express sessions
+* Stores sessions in MongoDB
+* Registers authentication routes
+* Registers complaint routes
+* Protects admin routes
+* Handles the student dashboard
+* Handles 404 errors
+* Handles application errors
+
+Main route mounting:
+
+```js
+app.use("/", authRouter);
+
+app.use("/complaints", complaintsRouter);
+
+app.use("/admin", requireAdmin, adminRouter);
+```
+
+The important part for authorization is:
+
+```js
+app.use("/admin", requireAdmin, adminRouter);
+```
+
+This means every route under `/admin` must pass the `requireAdmin` middleware.
 
 ---
 
-# 2. Packages We Used
+# Middleware
 
-## Express
+## `middleware/auth.js`
 
-Express is the backend framework.
+Contains authentication and authorization middleware.
 
-It handles:
+### `requireLogin`
 
-* Routes
-* Requests
-* Responses
-* Middleware
-* Server
+Checks whether a user is logged in.
 
-Example:
+If the user is not logged in:
 
-app.get("/student", ...)
+```text
+/login
+```
 
-This means when the browser requests /student, Express handles that request.
+is returned.
 
----
+### `requireAdmin`
 
-## Mongoose
+Checks:
 
-Mongoose connects our Node.js application with MongoDB.
+1. Whether the user is logged in
+2. Whether the user's role is `admin`
 
-We use it to:
+If the user is not an admin, access is denied.
 
-* Create schemas
-* Create models
-* Save complaints
-* Find complaints
-* Update complaints
-* Delete complaints
+### `requireStudent`
 
-Example:
+Checks:
 
-Complaint.find({})
+1. Whether the user is logged in
+2. Whether the user's role is `student`
 
-gets complaints from MongoDB.
+This prevents users with another role from accessing student-only functionality.
 
 ---
 
-## EJS
+# Models
 
-EJS is our template engine.
+## `models/user.js`
 
-It allows us to create HTML pages that contain dynamic data.
+Defines the User schema.
 
-Example:
+A user contains:
 
-<%= complaint.title %>
+```text
+studentId
+password
+role
+```
 
-The value comes from MongoDB instead of being written permanently inside HTML.
+The role can be:
 
----
+```text
+student
+admin
+```
 
-## Joi
-
-Joi is used for validation.
-
-It checks whether the data submitted by the user is valid before saving it to MongoDB.
-
-For example, a complaint must have:
-
-* Student ID
-* Title
-* Category
-* Location
-* Description
+Passwords are stored as bcrypt hashes instead of plain text passwords.
 
 ---
 
-## Multer
+## `models/complaint.js`
 
-Multer handles file uploads.
+Defines the Complaint schema.
 
-We use it to allow students to upload complaint images.
+A complaint contains:
 
-Example:
+```text
+complaintId
+studentId
+title
+category
+location
+description
+image
+department
+status
+createdAt
+```
 
-upload.single("image")
+### Complaint ID
 
-This receives one uploaded image from the form.
+Every complaint receives a unique ID such as:
 
----
+```text
+CF-XXXXXXXX
+```
 
-## Method-Override
+### Department
 
-HTML forms normally support GET and POST.
+The department initially has:
 
-Method-override allows us to use methods like:
+```text
+Not Assigned
+```
 
-PATCH
+### Status
 
-DELETE
+The status can be:
 
-through a normal HTML form.
-
-For example:
-
-POST + _method=PATCH
-
-becomes a PATCH request in Express.
-
----
-
-## Node.js fs
-
-fs means File System.
-
-We use it when deleting a complaint's uploaded image from the server.
-
-For example:
-
-fs.unlinkSync(imagePath)
-
-deletes the image file.
-
----
-
-# 3. app.js
-
-This is the main file of the application.
-
-It connects everything together.
-
-It contains:
-
-* Express setup
-* MongoDB connection
-* Middleware
-* Routes
-* Error handling
-* Server startup
+```text
+Pending
+Assigned
+In Progress
+Resolved
+```
 
 ---
 
-# 4. Express Setup
+# Routes
 
-We create the Express application:
+## `routes/auth.js`
 
-const express = require("express");
-const app = express();
+Handles authentication.
 
-app is our Express application.
+### GET `/login`
 
-We use app to create routes and middleware.
+Displays the login page.
 
----
+### POST `/login`
 
-# 5. Port
-
-We use:
-
-const port = 8080;
-
-Our application runs at:
-
-localhost:8080
-
----
-
-# 6. Path
-
-Node's path module helps create safe file paths.
-
-We use it for:
-
-app.set("views", path.join(__dirname, "views"));
-
-and:
-
-express.static(path.join(__dirname, "public"))
-
----
-
-# 7. Static Files
-
-This middleware:
-
-app.use(express.static(path.join(__dirname, "public")));
-
-allows the browser to access files inside public.
-
-For example:
-
-public/index.css
-
-can be accessed using:
-
-/index.css
-
-It also allows uploaded images inside:
-
-public/uploads/
-
-to be displayed using their URL.
-
----
-
-# 8. Body Parser
-
-We use:
-
-app.use(express.urlencoded({ extended: true }));
-
-This reads data submitted by HTML forms.
-
-For example:
-
-Student ID
-Title
-Category
-Description
-
-become available through:
-
-req.body
-
----
-
-# 9. JSON Parser
-
-We use:
-
-app.use(express.json());
-
-This allows Express to read JSON request bodies.
-
----
-
-# 10. Method Override
-
-We use:
-
-app.use(methodOverride(function (req) {
-if (req.body && req.body._method) {
-return req.body._method;
-}
-}));
-
-This checks whether the form contains:
-
-_method
-
-For example:
-
-_method = PATCH
-
-Express then treats the request as PATCH.
-
-This allowed our admin update form to work.
-
----
-
-# 11. MongoDB Connection
-
-We connect to MongoDB using Mongoose:
-
-await mongoose.connect("mongodb://127.0.0.1:27017/campusfix");
-
-Database name:
-
-campusfix
-
-MongoDB stores our complaints permanently.
-
----
-
-# 12. Home Route
-
-Route:
-
-GET /
-
-It renders:
-
-index.ejs
-
-This is the starting page of CampusFix.
-
-The student can enter their Student ID here.
-
----
-
-# 13. Student Dashboard Route
-
-Route:
-
-GET /student?studentId=123
-
-The Student ID comes from the URL query.
-
-We use:
-
-req.query.studentId
-
-Then MongoDB searches for complaints belonging to that Student ID.
-
-Example:
-
-Complaint.find({
-studentId: studentId
-});
-
-This allows one student to have multiple complaints.
-
----
-
-# 14. Admin Dashboard Route
-
-Route:
-
-GET /admin
-
-It gets all complaints:
-
-Complaint.find({});
-
-Then we calculate:
-
-* Total complaints
-* Pending complaints
-* In Progress complaints
-* Resolved complaints
-
-These values are sent to:
-
-adminDashboard.ejs
-
----
-
-# 15. New Complaint Route
-
-Route:
-
-GET /complaints/new
-
-The Student ID is passed through the URL:
-
-/complaints/new?studentId=123
-
-The route receives:
-
-req.query.studentId
-
-and sends it to newComplaint.ejs.
-
-This prevents the student from having to enter the ID again.
-
----
-
-# 16. Create Complaint Route
-
-Route:
-
-POST /complaints
-
-This is one of the most important routes.
+Authenticates the user.
 
 The process is:
 
-Student submits form
-↓
-Multer receives image
-↓
-Joi validates data
-↓
-Complaint object is created
-↓
-Complaint is saved to MongoDB
-↓
-Student dashboard opens
+```text
+Student/Admin enters ID and password
+              ↓
+        Find user in MongoDB
+              ↓
+       Compare password using bcrypt
+              ↓
+       Create session information
+              ↓
+      Check user's role
+         ↙          ↘
+    Student        Admin
+       ↓              ↓
+ /student          /admin
+```
 
-We create:
+### GET `/logout`
 
-const complaint = new Complaint({
-complaintId: "CF-" + Date.now(),
-studentId: req.body.studentId,
-title: req.body.title,
-category: req.body.category,
-location: req.body.location,
-description: req.body.description,
-image: req.file ? "/uploads/" + req.file.filename : null
-});
-
-Then:
-
-await complaint.save();
-
-saves it to MongoDB.
+Destroys the current session and redirects the user to the login page.
 
 ---
 
-# 17. Complaint Details Route
+## `routes/complaints.js`
 
-Route:
+Handles student complaint functionality.
 
-GET /complaints/:id
+### GET `/complaints`
 
-Example:
+Gets complaints from MongoDB and displays them.
 
-/complaints/68abc123...
+### GET `/complaints/new`
 
-The ID comes from:
+Displays the complaint submission form.
 
-req.params.id
+### POST `/complaints`
 
-We find the complaint:
+Creates a new complaint.
 
-Complaint.findById(id)
+The request is validated using Joi before the complaint is saved.
 
-Then send it to:
+If an image is uploaded, Multer stores it in:
 
-complaintDetails.ejs
+```text
+public/uploads/
+```
 
----
+The image path is then stored with the complaint.
 
-# 18. View Photo Route
+### GET `/complaints/:id`
 
-Route:
+Displays a specific complaint.
 
-GET /complaints/:id/photo
+The MongoDB ObjectId is checked before querying the database.
 
-This route finds the complaint first.
+### GET `/complaints/:id/photo`
 
-Then:
-
-res.render("data/viewimage", { complaint });
-
-opens:
-
-viewimage.ejs
-
-The image is displayed using:
-
-<img src="<%= complaint.image %>">
-
-The value of complaint.image comes from MongoDB.
+Displays the uploaded complaint image.
 
 ---
 
-# 19. Admin Complaint Edit Route
+## `routes/admin.js`
 
-Route:
+Handles admin functionality.
 
-GET /admin/complaints/:id
+### GET `/admin`
 
-It finds one complaint and opens:
+Displays the admin dashboard.
 
-editComplaint.ejs
+The dashboard calculates:
 
-The admin can change:
+* Total complaints
+* Pending complaints
+* In-progress complaints
+* Resolved complaints
+
+### GET `/admin/complaints/:id`
+
+Displays the page for editing a complaint.
+
+### PATCH `/admin/complaints/:id`
+
+Allows an administrator to update:
 
 * Department
-* Status
+* Complaint status
+
+The update is validated using Joi.
+
+### DELETE `/admin/complaints/:id`
+
+Deletes a complaint.
+
+If the complaint has an uploaded image, the image file is also removed.
 
 ---
 
-# 20. PATCH Route
+# Validation
 
-Route:
+## `schema.js`
 
-PATCH /admin/complaints/:id
+Contains Joi validation for complaint creation.
 
-This updates an existing complaint.
+The following fields are required:
 
-First we get:
-
-const { department, status } = req.body;
-
-Then Joi validates those values.
-
-After validation:
-
-Complaint.findByIdAndUpdate(
-id,
-{
-department,
-status
-}
-);
-
-updates MongoDB.
-
----
-
-# 21. DELETE Route
-
-Route:
-
-DELETE /admin/complaints/:id
-
-This deletes a complaint.
-
-First we find the complaint.
-
-Then, if it has an image, we delete the image file.
-
-Finally:
-
-Complaint.findByIdAndDelete(id);
-
-removes the complaint from MongoDB.
-
----
-
-# 22. ObjectId Validation
-
-Before searching MongoDB, we check:
-
-mongoose.Types.ObjectId.isValid(id)
-
-This prevents invalid MongoDB IDs from causing errors.
-
-If the ID is invalid:
-
-throw new ExpressError(400, "Invalid complaint ID");
-
----
-
-# 23. Complaint Model
-
-File:
-
-models/complaint.js
-
-This defines the structure of a complaint in MongoDB.
-
-The important fields are:
-
-complaintId
-
-Unique ID shown to the user.
-
-Example:
-
-CF-1757581234567
-
----
-
-studentId
-
-Stores which student created the complaint.
-
-Multiple complaints can have the same Student ID.
-
-Example:
-
-Student 101
-→ Complaint 1
-→ Complaint 2
-→ Complaint 3
-
----
-
-title
-
-Short title of the problem.
-
-Example:
-
-Wi-Fi not working
-
----
-
-category
-
-Problem category.
-
-Example:
-
-Electricity
-Water
-Cleanliness
-Furniture
-Wi-Fi
-Maintenance
-
----
-
-location
-
-Where the problem occurred.
-
-Example:
-
-Block A, Room 204
-
----
-
-description
-
-Detailed explanation of the problem.
-
----
-
-image
-
-Stores the uploaded image path.
-
-Example:
-
-/uploads/abc123
-
----
-
-department
-
-Stores which department is responsible.
-
-Default:
-
-Not Assigned
-
----
-
-status
-
-Stores complaint progress.
-
-Possible values:
-
-Pending
-Assigned
-In Progress
-Resolved
-
----
-
-createdAt
-
-Automatically stores when the complaint was created.
-
----
-
-# 24. ExpressError.js
-
-File:
-
-utils/ExpressError.js
-
-This creates our custom error class.
-
-It allows us to store:
-
-statusCode
-
-and:
-
-message
-
-Example:
-
-throw new ExpressError(404, "Complaint not found");
-
-Instead of writing error handling repeatedly, we pass the error to our error middleware.
-
----
-
-# 25. wrapAsync.js
-
-File:
-
-utils/wrapAsync.js
-
-Express does not automatically handle rejected promises in all versions/setups.
-
-Our routes contain async operations such as:
-
-await Complaint.find()
-
-wrapAsync catches errors from async routes.
-
-Conceptually:
-
-Route
-↓
-Async function
-↓
-Error?
-↓
-next(error)
-↓
-Error middleware
-
-This keeps our routes cleaner.
-
----
-
-# 26. validateComplaint.js
-
-This file contains Joi validation for creating complaints.
-
-It checks:
-
-studentId
+```text
 title
 category
 location
 description
+```
 
-For example, if the student submits an empty title, Joi detects the error before the complaint is saved.
+Invalid data is rejected before it is stored in MongoDB.
 
----
+Admin complaint updates also validate:
 
-# 27. validateComplaintUpdate.js
-
-This validates admin updates.
-
-It checks:
-
+```text
 department
-
-and:
-
 status
-
-Status is restricted to:
-
-Pending
-Assigned
-In Progress
-Resolved
-
-This prevents invalid status values from being stored.
+```
 
 ---
 
-# 28. Express Error Middleware
+# Error Handling
 
-At the bottom of app.js we have error handling.
+## `utils/ExpressError.js`
 
-It receives:
+Provides a custom error class for application errors.
 
-err
+It allows errors to contain:
 
-Then gets:
-
+```text
 statusCode
-
-and:
-
 message
-
-Finally it sends the error response.
+```
 
 For example:
 
-404 → Page not found
+```text
+400 - Bad Request
+401 - Unauthorized
+403 - Access Denied
+404 - Not Found
+```
 
-400 → Invalid complaint ID
+## `utils/wrapAsync.js`
 
-500 → Something went wrong
+Used around asynchronous Express route handlers.
 
----
-
-# 29. 404 Route
-
-We also have a catch-all route.
-
-If no previous route matches the request, it creates:
-
-404 Page not found
-
-This is why we saw Page not found when a route was incorrect.
+It prevents repetitive `try/catch` blocks and forwards asynchronous errors to the Express error-handling middleware.
 
 ---
 
-# 30. index.ejs
+# Views
 
-This is the home page.
+The EJS templates are located inside:
 
-It allows the student to enter their Student ID.
+```text
+views/
+```
 
-The form sends:
+## `views/data/login.ejs`
 
-GET /student?studentId=...
+Login page for students and administrators.
 
-This opens the student's dashboard.
+The same login form is used for both roles.
 
-It also provides access to the Admin Dashboard.
-
----
-
-# 31. studentDashboard.ejs
-
-This displays complaints belonging to the entered Student ID.
-
-It receives:
-
-complaints
-
-and:
-
-studentId
-
-It shows:
-
-* Student ID
-* Report a Problem
-* My Complaints
-* Complaint title
-* Location
-* Status
-* View Details
-* View Photo
-
-The View Photo button only appears if:
-
-complaint.image
-
-exists.
+After authentication, the server checks the user's role and redirects accordingly.
 
 ---
 
-# 32. newComplaint.ejs
+## `views/data/studentDashboard.ejs`
 
-This contains the complaint form.
+Student dashboard.
 
-The student enters:
+It displays complaints belonging to the logged-in student.
 
-* Student ID
-* Problem title
+---
+
+## `views/data/adminDashboard.ejs`
+
+Admin dashboard.
+
+It displays all complaints and complaint statistics.
+
+---
+
+## `views/data/newComplaint.ejs`
+
+Form used by students to create a new complaint.
+
+Students can provide:
+
+* Title
 * Category
 * Location
 * Description
 * Image
 
-The Student ID is automatically received from the dashboard:
+---
 
-<%= studentId %>
+## `views/data/complaints.ejs`
 
-and is readonly.
-
-The form sends data to:
-
-POST /complaints
+Displays complaint records.
 
 ---
 
-# 33. complaints.ejs
+## `views/data/complaintDetails.ejs`
 
-This displays complaints from the database.
-
-The route:
-
-GET /complaints
-
-gets all complaints.
-
-Each complaint displays:
-
-* Title
-* Complaint ID
-* Category
-* Location
-* Status
-* View
-* View Photo
-
-The complaint data is dynamic and comes from MongoDB.
+Displays complete information about a complaint.
 
 ---
 
-# 34. complaintDetails.ejs
+## `views/data/editComplaint.ejs`
 
-This displays complete information about one complaint.
+Admin page used to update:
 
-It receives one complaint using:
-
-complaint._id
-
-It can display:
-
-* Complaint ID
-* Student ID
-* Title
-* Category
-* Location
-* Description
 * Department
 * Status
-* Image information
 
 ---
 
-# 35. editComplaint.ejs
+## `views/data/viewimage.ejs`
 
-This is the admin update page.
-
-The admin can select:
-
-Department
-
-and:
-
-Status
-
-The form uses:
-
-_method=PATCH
-
-so that Express handles it as a PATCH request.
-
-There is also a delete form using:
-
-_method=DELETE
+Displays the uploaded complaint image.
 
 ---
 
-# 36. viewimage.ejs
+# EJS Includes
 
-This is our separate image page.
+## `views/includes/head.ejs`
 
-It receives:
+Contains common HTML head information and required styles/scripts.
 
-complaint
+## `views/includes/navbar.ejs`
 
-Then checks:
+Contains the common navigation bar.
 
-if (complaint.image)
+## `views/includes/footer.ejs`
 
-If an image exists:
+Contains the common footer.
 
-<img src="<%= complaint.image %>">
+## `views/layouts/boilerplate.ejs`
 
-is displayed.
-
-If no image exists:
-
-No photo uploaded for this complaint.
-
-is displayed.
+Provides the common EJS page layout.
 
 ---
 
-# 37. login.ejs
+# Public Folder
 
-This is currently a login page/UI file.
+## `public/`
 
-Authentication has not been fully implemented yet.
+Contains static files that can be directly served by Express.
 
-Later we can connect it to proper admin authentication.
+### `public/uploads/`
 
----
+Stores complaint images uploaded through the application.
 
-# 38. head.ejs
+### CSS files
 
-This is a reusable EJS include.
-
-Instead of writing the same HTML head section on every page, we keep it in one place.
-
-It contains things such as:
-
-* HTML setup
-* Bootstrap
-* Common CSS/metadata
-
-Then pages use:
-
-include("../includes/head.ejs")
+Contains the styling used by the CampusFix pages.
 
 ---
 
-# 39. navbar.ejs
+# Authentication Flow
 
-This contains the navigation bar.
+The login system works using sessions.
 
-Because it is an include, we don't need to copy the navbar into every page manually.
-
----
-
-# 40. footer.ejs
-
-This contains the common footer section.
-
-Again, we include it in different pages instead of duplicating the same HTML.
-
----
-
-# 41. boilerplate.ejs
-
-This is the layout file.
-
-It can be used as a common page structure for EJS pages.
-
-Our current pages mainly use the head/navbar/footer includes directly.
-
----
-
-# 42. CSS Files
-
-Each page has its own CSS file.
-
-For example:
-
-index.css
-→ Home page styling
-
-studentDashboard.css
-→ Student dashboard styling
-
-adminDashboard.css
-→ Admin dashboard styling
-
-newComplaint.css
-→ Complaint form styling
-
-complaints.css
-→ Complaint list styling
-
-complaintDetails.css
-→ Complaint details styling
-
-editComplaint.css
-→ Admin edit page styling
-
-viewimage.css
-→ Image page styling
-
-style.css
-→ General/common styling
-
-login.css
-→ Login page styling
-
-This keeps page-specific styling separated.
+```text
+User opens /login
+        ↓
+Enters ID + password
+        ↓
+POST /login
+        ↓
+Find user in MongoDB
+        ↓
+bcrypt checks password
+        ↓
+Create session
+        ↓
+Save userId
+Save studentId
+Save role
+        ↓
+Check role
+   ↙          ↘
+student       admin
+   ↓             ↓
+/student       /admin
+```
 
 ---
 
-# 43. public/uploads
+# Authorization Flow
 
-This folder stores uploaded complaint images.
+Authentication answers:
 
-Multer saves the uploaded file here.
+> "Is this user logged in?"
 
-For example:
+Authorization answers:
 
-public/uploads/abc123
+> "Is this user allowed to access this resource?"
 
-MongoDB does not store the actual image in our current implementation.
+For example, an administrator route is protected with:
 
-MongoDB stores the path:
+```js
+app.use("/admin", requireAdmin, adminRouter);
+```
 
-/uploads/abc123
+If a student directly tries to access:
 
-The browser then requests that path from Express.
+```text
+/admin
+```
 
-Flow:
+the `requireAdmin` middleware checks the role and rejects the request.
 
-Student uploads image
-↓
-Multer
-↓
-public/uploads/
-↓
-MongoDB stores image path
-↓
-EJS reads complaint.image
-↓ <img src="...">
-↓
-Browser displays image
+This prevents users from bypassing the UI by directly sending requests to admin routes.
 
 ---
 
-# 44. package.json
+# Database
 
-This contains project information and dependencies.
+CampusFix uses MongoDB.
 
-It tells Node which packages our project uses.
+Default local database:
 
-Important dependencies include:
+```text
+mongodb://127.0.0.1:27017/campusfix
+```
 
+Main collections:
+
+```text
+users
+complaints
+```
+
+### Users
+
+Stores authentication information and roles.
+
+### Complaints
+
+Stores campus problems reported by students.
+
+---
+
+# Installation
+
+Clone the repository:
+
+```bash
+git clone <your-repository-url>
+```
+
+Move into the project:
+
+```bash
+cd CampusFix
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the application:
+
+```bash
+node app.js
+```
+
+The application runs on:
+
+```text
+http://localhost:8080
+```
+
+Make sure MongoDB is running locally before starting the application.
+
+---
+
+# Required Packages
+
+The main dependencies include:
+
+```text
 express
 mongoose
 ejs
-joi
-multer
+ejs-mate
 method-override
+multer
+joi
+bcrypt
+express-session
+connect-mongo
+```
 
 ---
 
-# 45. package-lock.json
+# Application Workflow
 
-This records the exact dependency versions installed by npm.
+## Student Workflow
 
-We commit this file to GitHub.
+```text
+Login
+  ↓
+Student Dashboard
+  ↓
+Create Complaint
+  ↓
+Complaint Saved in MongoDB
+  ↓
+Admin Reviews Complaint
+  ↓
+Admin Assigns Department
+  ↓
+Admin Updates Status
+  ↓
+Student Tracks Status
+  ↓
+Complaint Resolved
+```
 
-When another developer runs:
+## Admin Workflow
 
-npm install
-
-npm can use package-lock.json to install the appropriate versions.
-
----
-
-# 46. schema.js
-
-This is an older/supporting schema file in the current project.
-
-Our main complaint database schema is now inside:
-
-models/complaint.js
-
-So schema.js is not the main file responsible for our Complaint model.
-
----
-
-# 47. Complete Application Flow
-
-## Student creates complaint
-
-Student opens:
-
-/
-
-↓
-
-Enters Student ID
-
-↓
-
-/student?studentId=123
-
-↓
-
-Clicks Report a Problem
-
-↓
-
-/complaints/new?studentId=123
-
-↓
-
-Fills complaint form
-
-↓
-
-Uploads image
-
-↓
-
-POST /complaints
-
-↓
-
-Multer handles image
-
-↓
-
-Joi validates form
-
-↓
-
-Complaint object created
-
-↓
-
-MongoDB saves complaint
-
-↓
-
-Redirect to:
-
-/student?studentId=123
-
-↓
-
-Student sees the complaint.
+```text
+Login
+  ↓
+Admin Dashboard
+  ↓
+View All Complaints
+  ↓
+Open Complaint
+  ↓
+Assign Department
+  ↓
+Update Status
+  ↓
+Resolve Complaint
+```
 
 ---
 
-# 48. Student Views Photo
+# Security
 
-Student clicks:
+The current application includes:
 
-View Photo
+* Password hashing with bcrypt
+* Session-based authentication
+* MongoDB session storage
+* Role-based authorization
+* Protected admin routes
+* Joi request validation
+* ObjectId validation
+* Restricted student/admin access
 
-↓
+For production deployment, additional security should be added, including:
 
-/complaints/:id/photo
-
-↓
-
-MongoDB finds complaint
-
-↓
-
-viewimage.ejs opens
-
-↓
-
-EJS reads:
-
-complaint.image
-
-↓
-
-Browser displays image.
+* Environment variables for secrets
+* Secure session cookies
+* HTTPS
+* CSRF protection
+* Rate limiting
+* Stronger password policies
+* Proper production MongoDB credentials
+* Better file-upload validation
 
 ---
 
-# 49. Admin Updates Complaint
+# Future Improvements
 
-Admin opens:
+Possible future features include:
 
-/admin
-
-↓
-
-Sees all complaints
-
-↓
-
-Opens one complaint
-
-↓
-
-/admin/complaints/:id
-
-↓
-
-Changes department/status
-
-↓
-
-Form sends POST + _method=PATCH
-
-↓
-
-method-override converts it to PATCH
-
-↓
-
-Joi validates update
-
-↓
-
-MongoDB updates complaint
-
-↓
-
-Admin dashboard opens again.
+* College email authentication
+* Better role management
+* Complaint priority levels
+* Department-specific dashboards
+* Email notifications
+* Complaint comments
+* Student feedback after resolution
+* Complaint analytics
+* Search and filtering
+* Pagination
+* Emergency complaint button
+* Campus announcements
+* Cloud image storage
+* Production deployment
+* Mobile-friendly improvements
 
 ---
 
-# 50. Admin Deletes Complaint
+# Project Goal
 
-Admin clicks Delete
+CampusFix is designed to provide a simple and transparent system for handling campus problems.
 
-↓
+Instead of complaints being reported informally and becoming difficult to track, CampusFix provides a complete workflow:
 
-Form sends POST + _method=DELETE
+```text
+Report → Assign → Track → Resolve
+```
 
-↓
-
-method-override converts it to DELETE
-
-↓
-
-Complaint is found
-
-↓
-
-Uploaded image is deleted if present
-
-↓
-
-Complaint is deleted from MongoDB
-
-↓
-
-Admin dashboard opens again.
+This allows students to know the current status of their complaints while administrators get a centralized system for managing campus issues.
 
 ---
 
-# 51. Main Technologies
+# Author
 
-Frontend:
+**Krishna Chaudhary**
 
-HTML
-EJS
-CSS
-Bootstrap
-
-Backend:
-
-Node.js
-Express.js
-
-Database:
-
-MongoDB
-Mongoose
-
-Validation:
-
-Joi
-
-File Upload:
-
-Multer
-
-HTTP Method Support:
-
-Method-Override
-
-Error Handling:
-
-ExpressError
-wrapAsync
-
----
-
-# 52. What We Learned From This Project
-
-This project covers the important basics of a MERN-style backend application:
-
-1. Express server
-2. Routing
-3. Middleware
-4. MongoDB connection
-5. Mongoose schemas/models
-6. CRUD operations
-7. EJS dynamic pages
-8. Form handling
-9. Query parameters
-10. Route parameters
-11. File uploads
-12. Validation
-13. Custom errors
-14. Async error handling
-15. PATCH requests
-16. DELETE requests
-17. Static files
-18. MVC-style project organization
-
-The most important concept is that the application is **database-driven**.
-
-The EJS pages don't permanently contain complaint data.
-
-The flow is:
-
-Browser
-→ Express route
-→ MongoDB
-→ Express
-→ EJS
-→ Browser
-
-That is the main backend pattern you should remember.
+CampusFix — Campus Complaint Management System
