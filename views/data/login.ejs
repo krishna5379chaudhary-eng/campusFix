@@ -1,54 +1,60 @@
 <%- include("../includes/head.ejs") %>
-<%- include("../includes/navbar.ejs") %>
 
-<link rel="stylesheet" href="/login.css">
+<div class="container mt-5">
 
-<div class="container login-container">
     <div class="row justify-content-center">
-        <div class="col-md-5 col-lg-4">
 
-        <div class="card shadow login-card">
-            <div class="card-body p-4">
+        <div class="col-md-5">
 
-                <h2 class="text-center mb-4">Login</h2>
+            <div class="card p-4">
+
+                <h2 class="text-center mb-4">CampusFix Login</h2>
 
                 <form action="/login" method="POST">
 
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
+
+                        <label class="form-label">
+                            Student ID / Admin ID
+                        </label>
+
                         <input
-                            type="email"
+                            type="text"
+                            name="studentId"
                             class="form-control"
-                            id="email"
-                            name="email"
-                            placeholder="Enter your email"
                             required
                         >
+
                     </div>
+
 
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+
+                        <label class="form-label">
+                            Password
+                        </label>
+
                         <input
                             type="password"
-                            class="form-control"
-                            id="password"
                             name="password"
-                            placeholder="Enter your password"
+                            class="form-control"
                             required
                         >
+
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">
+
+                    <button class="btn btn-primary w-100">
                         Login
                     </button>
 
                 </form>
 
             </div>
+
         </div>
 
     </div>
-</div>
 
 </div>
 
