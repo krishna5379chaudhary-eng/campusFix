@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
@@ -21,5 +22,9 @@
     "mongoose": "^9.10.0",
     "multer": "^2.3.0",
     "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0"
   }
 }
