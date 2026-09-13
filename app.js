@@ -10,21 +10,17 @@ const path = require("path");
 
 const methodOverride = require("method-override");
 
-const multer = require("multer");
-
-const upload = multer({ dest: "public/uploads/" });
-
 const wrapAsync = require("./utils/wrapAsync.js");
 
 const ExpressError = require("./utils/ExpressError.js");
 
 const Complaint = require("./models/complaint.js");
 
-const complaintSchema = require("./utils/validateComplaint.js");
+const session = require("express-session");
 
-const complaintUpdateSchema = require("./utils/validateComplaintUpdate.js");
+const MongoStore = require("connect-mongo").MongoStore;
 
-const fs = require("fs");
+const { requireAdmin } = require("./middleware/auth");
 
 
 app.set("view engine", "ejs");
@@ -46,6 +42,23 @@ app.use(methodOverride(function (req) {
 }));
 
 
+app.use(session({
+
+    secret: "campusfix-secret",
+
+    resave: false,
+
+    saveUninitialized: false,
+
+    store: MongoStore.create({
+        mongoUrl: "mongodb://127.0.0.1:27017/campusfix"
+    }),
+
+    cookie: {
+        maxAge: 1000 * 60 * 60
+    }
+
+}));
 
 
 main()
@@ -54,253 +67,84 @@ main()
     })
     .catch((err) => console.log(err));
 
+
 async function main() {
 
-
-    await mongoose.connect("mongodb://127.0.0.1:27017/campusfix");
-
+    await mongoose.connect(
+        "mongodb://127.0.0.1:27017/campusfix"
+    );
 
 }
+
+
+// Home page
 
 app.get("/", (req, res) => {
 
-
-    res.render("data/index");
-
+    res.redirect("/login");
 
 });
+
+
+// Authentication routes
+
+const authRouter = require("./routes/auth");
+
+app.use("/", authRouter);
+
+
+// Complaint routes
+
+const complaintsRouter = require("./routes/complaints");
+
+app.use("/complaints", complaintsRouter);
+
+
+// Admin routes
+
+const adminRouter = require("./routes/admin");
+
+app.use("/admin", requireAdmin, adminRouter);
+
+
+// Student dashboard
 
 app.get("/student", wrapAsync(async (req, res) => {
 
-const { studentId } = req.query;
+    if (!req.session.userId) {
+        return res.redirect("/login");
+    }
 
-if (!studentId) {
-    throw new ExpressError(400, "Student ID is required");
-}
+    if (req.session.role !== "student") {
+        throw new ExpressError(403, "Access denied");
+    }
 
-const complaints = await Complaint.find({
-    studentId: studentId
-});
+    const studentId = req.session.studentId;
 
-res.render("data/studentDashboard", {
-    complaints,
-    studentId
-});
+    const complaints = await Complaint.find({
+        studentId: studentId
+    });
 
-}));
-
-app.get("/complaints/:id/photo", wrapAsync(async (req, res) => {
-
-const { id } = req.params;
-
-if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ExpressError(400, "Invalid complaint ID");
-}
-
-const complaint = await Complaint.findById(id);
-
-if (!complaint) {
-    throw new ExpressError(404, "Complaint not found");
-}
-
-res.render("data/viewimage", { complaint });
-
-}));
-
-
-
-app.get("/admin", wrapAsync(async (req, res) => {
-
-
-    const complaints = await Complaint.find({});
-
-    const totalComplaints = complaints.length;
-
-    const pendingComplaints = complaints.filter(
-        complaint => complaint.status === "Pending"
-    ).length;
-
-    const inProgressComplaints = complaints.filter(
-        complaint => complaint.status === "In Progress"
-    ).length;
-
-    const resolvedComplaints = complaints.filter(
-        complaint => complaint.status === "Resolved"
-    ).length;
-
-    res.render("data/adminDashboard", {
+    res.render("data/studentDashboard", {
         complaints,
-        totalComplaints,
-        pendingComplaints,
-        inProgressComplaints,
-        resolvedComplaints
+        studentId
     });
 
-
-}));
-
-app.get("/complaints/new", (req, res) => {
-const { studentId } = req.query;
-
-res.render("data/newComplaint", {
-    studentId
-});
-
-});
-
-
-app.get("/complaints", wrapAsync(async (req, res) => {
-
-
-    const complaints = await Complaint.find({});
-
-    res.render("data/complaints", { complaints });
-
-
-}));
-
-app.post("/complaints", upload.single("image"), wrapAsync(async (req, res) => {
-
-const { error } = complaintSchema.validate(req.body);
-
-if (error) {
-    throw new ExpressError(400, error.details[0].message);
-}
-
-const complaint = new Complaint({
-    complaintId: "CF-" + Date.now(),
-    studentId: req.body.studentId,
-    title: req.body.title,
-    category: req.body.category,
-    location: req.body.location,
-    description: req.body.description,
-    image: req.file ? "/uploads/" + req.file.filename : null
-});
-
-await complaint.save();
-
-res.redirect("/student?studentId=" + req.body.studentId);
-
 }));
 
 
-app.get("/complaints/:id", wrapAsync(async (req, res) => {
-
-
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ExpressError(400, "Invalid complaint ID");
-    }
-
-    const complaint = await Complaint.findById(id);
-
-    if (!complaint) {
-        throw new ExpressError(404, "Complaint not found");
-    }
-
-    res.render("data/complaintDetails", { complaint });
-
-
-}));
-
-app.get("/admin/complaints/:id", wrapAsync(async (req, res) => {
-
-
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ExpressError(400, "Invalid complaint ID");
-    }
-
-    const complaint = await Complaint.findById(id);
-
-    if (!complaint) {
-        throw new ExpressError(404, "Complaint not found");
-    }
-
-    res.render("data/editComplaint", { complaint });
-
-
-}));
-
-app.patch("/admin/complaints/:id", wrapAsync(async (req, res) => {
-
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ExpressError(400, "Invalid complaint ID");
-    }
-
-    const { department, status } = req.body;
-
-    const { error } = complaintUpdateSchema.validate({
-        department,
-        status
-    });
-
-    if (error) {
-        throw new ExpressError(400, error.details[0].message);
-    }
-
-    const complaint = await Complaint.findByIdAndUpdate(
-        id,
-        {
-            department: req.body.department,
-            status: req.body.status
-        },
-        { new: true }
-    );
-
-    if (!complaint) {
-        throw new ExpressError(404, "Complaint not found");
-    }
-
-    res.redirect("/admin");
-
-}));
-
-app.delete("/admin/complaints/:id", wrapAsync(async (req, res) => {
-
-const { id } = req.params;
-
-if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ExpressError(400, "Invalid complaint ID");
-}
-
-const complaint = await Complaint.findById(id);
-
-if (!complaint) {
-    throw new ExpressError(404, "Complaint not found");
-}
-
-if (complaint.image) {
-
-    const imagePath = path.join(__dirname, "public", complaint.image);
-
-    if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-    }
-
-}
-
-await Complaint.findByIdAndDelete(id);
-
-res.redirect("/admin");
-
-}));
-
+// 404
 
 app.all("/{*splat}", (req, res, next) => {
 
-
     next(new ExpressError(404, "Page not found!"));
-
 
 });
 
-app.use((err, req, res, next) => {
 
+// Error handling
+
+app.use((err, req, res, next) => {
 
     const {
         statusCode = 500,
@@ -309,13 +153,11 @@ app.use((err, req, res, next) => {
 
     res.status(statusCode).send(message);
 
-
 });
+
 
 app.listen(port, () => {
 
-
     console.log("Server running on port " + port);
-
 
 });
