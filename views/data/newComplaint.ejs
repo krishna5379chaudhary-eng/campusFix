@@ -1,83 +1,120 @@
+
 <%- include("../includes/head.ejs") %>
-    <%- include("../includes/navbar.ejs") %>
+<%- include("../includes/navbar.ejs") %>
 
-        <link rel="stylesheet" href="/newComplaint.css">
+<link rel="stylesheet" href="/newComplaint.css">
 
-        <div class="container complaint-container">
+<div class="container complaint-container">
 
-            <div class="card complaint-card">
+    <div class="card complaint-card">
 
-                <div class="card-body">
+        <div class="card-body">
 
-                    <h1 class="complaint-title mb-4">Report a Problem</h1>
+            <h1 class="complaint-title mb-4">Report a Problem</h1>
 
-                    <form action="/complaints" method="POST" enctype="multipart/form-data">
-                        <div class="mb-3">
+            <form action="/complaints" method="POST" enctype="multipart/form-data">
 
-                           
-                            <label class="form-label">
-                                Student ID
-                            </label>
+                <!-- Student ID comes from registered student data -->
+                <input
+                    type="hidden"
+                    name="studentId"
+                    value="<%= studentId %>"
+                >
 
-                            <input type="text" name="studentId" class="form-control" value="<%= studentId %>">
-                           
+                <div class="mb-3">
 
-                        </div>
+                    <label class="form-label">
+                        Problem Title
+                    </label>
 
-
-                        <div class="mb-3">
-                            <label class="form-label">Problem Title</label>
-
-                            <input type="text" name="title" class="form-control" placeholder="e.g. Wi-Fi not working"
-                                required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-
-                            <select name="category" class="form-select" required>
-
-                                <option value="">Select Category</option>
-                                <option value="Electricity">Electricity</option>
-                                <option value="Water">Water</option>
-                                <option value="Cleanliness">Cleanliness</option>
-                                <option value="Furniture">Furniture</option>
-                                <option value="Wi-Fi">Wi-Fi</option>
-                                <option value="Maintenance">Maintenance</option>
-
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Location</label>
-
-                            <input type="text" name="location" class="form-control" placeholder="e.g. Block A, Room 204"
-                                required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-
-                            <textarea name="description" class="form-control" rows="5"
-                                placeholder="Describe the problem..." required></textarea>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Upload Image</label>
-
-                            <input type="file" name="image" class="form-control" accept="image/*">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">
-                            Submit Complaint
-                        </button>
-
-                    </form>
+                    <input
+                        type="text"
+                        name="title"
+                        class="form-control"
+                        placeholder="e.g. Wi-Fi not working"
+                        required
+                    >
 
                 </div>
 
-            </div>
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Category
+                    </label>
+
+                    <select name="category" class="form-select" required>
+
+                        <option value="">Select Category</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Water">Water</option>
+                        <option value="Cleanliness">Cleanliness</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Wi-Fi">Wi-Fi</option>
+                        <option value="Maintenance">Maintenance</option>
+
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Location
+                    </label>
+
+                    <input
+                        type="text"
+                        name="location"
+                        class="form-control"
+                        placeholder="e.g. Block A, Room 204"
+                        required
+                    >
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Description
+                    </label>
+
+                    <textarea
+                        name="description"
+                        class="form-control"
+                        rows="5"
+                        placeholder="Describe the problem..."
+                        required
+                    ></textarea>
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Upload Image
+                    </label>
+
+                    <input
+                        type="file"
+                        name="image"
+                        class="form-control"
+                        accept="image/*"
+                    >
+
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Submit Complaint
+                </button>
+
+            </form>
 
         </div>
 
-        <%- include("../includes/footer.ejs") %>
+    </div>
+
+</div>
+
+<%- include("../includes/footer.ejs") %>
+

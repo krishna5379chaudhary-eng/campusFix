@@ -5,10 +5,13 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 
 const Complaint = require("../models/complaint");
+const Issue = require("../models/issue");
+
 const wrapAsync = require("../utils/wrapAsync");
 const ExpressError = require("../utils/ExpressError");
 
 const complaintSchema = require("../schema");
+const { requireStudent } = require("../middleware/auth");
 
 const upload = multer({ dest: "public/uploads/" });
 
@@ -53,38 +56,137 @@ router.get("/", wrapAsync(async (req, res) => {
 
 }));
 
+router.post(
+    "/",
+    requireStudent,
+    upload.single("image"),
+    wrapAsync(async (req, res) => {
 
-router.post("/", upload.single("image"), wrapAsync(async (req, res) => {
+        console.log("REQ BODY:", req.body);
 
-    const { error } = complaintSchema.validate(req.body);
+        const { error } = complaintSchema.validate(req.body);
 
-    if (error) {
-        throw new ExpressError(400, error.details[0].message);
-    }
+        if (error) {
+            throw new ExpressError(400, error.details[0].message);
+        }
 
-    const complaint = new Complaint({
+        const {
+            studentId,
+            title,
+            category,
+            location,
+            description
+        } = req.body;
 
-        complaintId: "CF-" + Date.now(),
 
-        studentId: req.body.studentId,
+        // Clean values before comparing
+        const cleanTitle = title
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
 
-        title: req.body.title,
+        const cleanCategory = category
+            .trim()
+            .toLowerCase();
 
-        category: req.body.category,
+        const cleanLocation = location
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
 
-        location: req.body.location,
 
-        description: req.body.description,
+        // Find an existing issue with the same problem
+        let issue = await Issue.findOne({
+            title: cleanTitle,
+            category: cleanCategory,
+            status: { $ne: "Resolved" }
+        });
 
-        image: req.file ? "/uploads/" + req.file.filename : null
 
-    });
+        // Check if this student has already reported
+        // the same issue from the same location
+        if (issue) {
 
-    await complaint.save();
+            const duplicate = await Complaint.findOne({
+                issue: issue._id,
+                studentId: studentId,
+                location: cleanLocation
+            });
 
-    res.redirect("/student?studentId=" + req.body.studentId);
+            if (duplicate) {
+                throw new ExpressError(
+                    400,
+                    "You have already reported this issue from this location."
+                );
+            }
+        }
 
-}));
+
+        // Create the complaint
+        const complaint = new Complaint({
+
+            complaintId: "CF-" + Date.now(),
+
+            user: req.user._id,
+
+            studentId: studentId,
+
+            issue: issue ? issue._id : null,
+
+            title: cleanTitle,
+
+            category: cleanCategory,
+
+            location: cleanLocation,
+
+            description: description,
+
+            image: req.file
+                ? "/uploads/" + req.file.filename
+                : null
+
+        });
+
+
+        await complaint.save();
+
+
+        // If no existing issue was found,
+        // create a new issue
+        if (!issue) {
+
+            issue = new Issue({
+
+                title: cleanTitle,
+
+                category: cleanCategory,
+
+                complaints: [complaint._id]
+
+            });
+
+            await issue.save();
+
+
+            // Connect complaint with the newly created issue
+            complaint.issue = issue._id;
+
+            await complaint.save();
+
+        } else {
+
+            // Add this complaint to the existing issue
+            issue.complaints.push(complaint._id);
+
+            await issue.save();
+
+        }
+
+
+        res.redirect("/student?studentId=" + studentId);
+
+    })
+);
 
 
 router.get("/:id", wrapAsync(async (req, res) => {

@@ -1,57 +1,69 @@
 const mongoose = require("mongoose");
 
 const complaintSchema = new mongoose.Schema({
-complaintId: {
-type: String,
-required: true,
-unique: true
-},
 
-studentId: {
-    type: String,
-    required: true
-},
+    complaintId: {
+        type: String,
+        required: true,
+        unique: true
+    },
 
-title: {
-    type: String,
-    required: true
-},
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
 
-category: {
-    type: String,
-    required: true
-},
+    studentId: {
+        type: String,
+        required: true
+    },
 
-location: {
-    type: String,
-    required: true
-},
+    issue: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Issue"
+    },
 
-description: {
-    type: String,
-    required: true
-},
+    title: {
+        type: String,
+        required: true
+    },
 
-image: {
-    type: String,
-    default: null
-},
+    category: {
+        type: String,
+        required: true
+    },
 
-department: {
-    type: String,
-    default: "Not Assigned"
-},
+    location: {
+        type: String,
+        required: true
+    },
 
-status: {
-    type: String,
-    enum: ["Pending", "Assigned", "In Progress", "Resolved"],
-    default: "Pending"
-},
+    description: {
+        type: String,
+        required: true
+    },
 
-createdAt: {
-    type: Date,
-    default: Date.now
-}
+    image: {
+        type: String,
+        default: null
+    },
+
+    department: {
+        type: String,
+        default: "Not Assigned"
+    },
+
+    status: {
+        type: String,
+        enum: ["Pending", "Assigned", "In Progress", "Resolved"],
+        default: "Pending"
+    },
+
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
 
 });
 

@@ -1,4 +1,5 @@
 const express = require("express");
+
 const router = express.Router();
 
 const mongoose = require("mongoose");
@@ -6,6 +7,8 @@ const path = require("path");
 const fs = require("fs");
 
 const Complaint = require("../models/complaint");
+const User = require("../models/user");
+
 const wrapAsync = require("../utils/wrapAsync");
 const ExpressError = require("../utils/ExpressError");
 const Joi = require("joi");
@@ -23,7 +26,8 @@ const complaintUpdateSchema = Joi.object({
 
 router.get("/", wrapAsync(async (req, res) => {
 
-    const complaints = await Complaint.find({});
+    const complaints = await Complaint.find({})
+        .populate("user");
 
     const totalComplaints = complaints.length;
 
@@ -58,13 +62,27 @@ router.get("/complaints/:id", wrapAsync(async (req, res) => {
         throw new ExpressError(400, "Invalid complaint ID");
     }
 
-    const complaint = await Complaint.findById(id);
+    const complaint = await Complaint.findById(id)
+        .populate("user");
 
     if (!complaint) {
         throw new ExpressError(404, "Complaint not found");
     }
 
-    res.render("data/editComplaint", { complaint });
+    let user = complaint.user;
+
+    if (!user && complaint.studentId) {
+
+        user = await User.findOne({
+            studentId: complaint.studentId
+        });
+
+    }
+
+    res.render("data/editComplaint", {
+        complaint,
+        user
+    });
 
 }));
 
@@ -122,7 +140,12 @@ router.delete("/complaints/:id", wrapAsync(async (req, res) => {
 
     if (complaint.image) {
 
-        const imagePath = path.join(__dirname, "..", "public", complaint.image);
+        const imagePath = path.join(
+            __dirname,
+            "..",
+            "public",
+            complaint.image.replace(/^\/+/, "")
+        );
 
         if (fs.existsSync(imagePath)) {
             fs.unlinkSync(imagePath);
