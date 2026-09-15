@@ -4,8 +4,11 @@ const router = express.Router();
 const User = require("../models/user");
 const Complaint = require("../models/complaint");
 const Emergency = require("../models/emergency");
+const Announcement = require("../models/announcement");
 
-router.get("/", async (req, res) => {
+const apiLimiter = require("../middleware/rateLimit");
+
+router.get("/", apiLimiter, async (req, res) => {
 
     const complaints = await Complaint.find({});
     const emergencies = await Emergency.find({});
@@ -35,7 +38,7 @@ router.get("/", async (req, res) => {
 
 });
 
-router.get("/complaints/:id", async (req, res) => {
+router.get("/complaints/:id", apiLimiter, async (req, res) => {
 
     const complaint = await Complaint.findById(req.params.id);
 
@@ -58,7 +61,7 @@ router.get("/complaints/:id", async (req, res) => {
 
 });
 
-router.get("/complaints/:id/edit", async (req, res) => {
+router.get("/complaints/:id/edit", apiLimiter, async (req, res) => {
 
     const complaint = await Complaint.findById(req.params.id);
 
@@ -81,7 +84,7 @@ router.get("/complaints/:id/edit", async (req, res) => {
 
 });
 
-router.patch("/complaints/:id", async (req, res) => {
+router.patch("/complaints/:id", apiLimiter, async (req, res) => {
 
     const {
         department,
@@ -108,7 +111,7 @@ router.patch("/complaints/:id", async (req, res) => {
 
 });
 
-router.delete("/complaints/:id", async (req, res) => {
+router.delete("/complaints/:id", apiLimiter, async (req, res) => {
 
     const complaint = await Complaint.findByIdAndDelete(
         req.params.id
@@ -119,6 +122,30 @@ router.delete("/complaints/:id", async (req, res) => {
     }
 
     res.redirect("/admin");
+
+});
+
+router.post("/announcements", apiLimiter, async (req, res) => {
+
+    const {
+        title,
+        message
+    } = req.body;
+
+    if (!title || !message) {
+        return res.status(400).send(
+            "Announcement title and message are required"
+        );
+    }
+
+    const announcement = new Announcement({
+        title: title,
+        message: message
+    });
+
+    await announcement.save();
+
+    res.redirect("/admin?announcement=published");
 
 });
 

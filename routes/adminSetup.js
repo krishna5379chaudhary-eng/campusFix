@@ -94,7 +94,7 @@ router.post("/:token", async (req, res) => {
         console.log("ADMIN SETUP ERROR:", error);
 
         res.status(500).send(
-            "Admin setup failed: " + error.message
+            "Admin setup failed."
         );
 
     }
