@@ -33,6 +33,21 @@
             <%= complaint.description %>
         </p>
 
+        <% if (complaint.image) { %>
+
+            <p>
+                <strong>Photo:</strong>
+            </p>
+
+            <img
+                src="/uploads/<%= complaint.image %>"
+                alt="Complaint Photo"
+                class="img-fluid rounded"
+                style="max-width: 500px;"
+            >
+
+        <% } %>
+
         <p>
             <strong>Department:</strong>
             <%= complaint.department %>

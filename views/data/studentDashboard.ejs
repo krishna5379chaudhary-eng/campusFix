@@ -1,92 +1,146 @@
 <%- include("../includes/head.ejs") %>
 <%- include("../includes/navbar.ejs") %>
 
-<link rel="stylesheet" href="/studentDashboard.css">
+<link rel="stylesheet" href="/studentDashboard.css">  
 
-<div class="container dashboard-container">
+<div class="container dashboard-container">  
 
-<h1 class="dashboard-title">Student Dashboard</h1>
+<h1 class="dashboard-title">Student Dashboard</h1>  
 
-<p>
-    <strong>Student ID:</strong> <%= studentId %>
-</p>
+<p>  
+    <strong>Student ID:</strong> <%= studentId %>  
+</p>  
 
-<div class="mt-4">
+<div class="mt-4">  
 
-    <a
-        href="/complaints/new?studentId=<%= studentId %>"
-        class="btn btn-primary me-2"
-    >
-        Report a Problem
-    </a>
 
-    <a
-        href="/student?studentId=<%= studentId %>"
-        class="btn btn-secondary"
-    >
-        My Complaints
-    </a>
+<a  
+    href="/complaints/new?studentId=<%= studentId %>"  
+    class="btn btn-primary me-2"  
+>  
+    Report a Problem  
+</a>  
 
-</div>
+<a  
+    href="/student?studentId=<%= studentId %>"  
+    class="btn btn-secondary me-2"  
+>  
+    My Complaints  
+</a> 
 
-<h3 class="mt-5">Recent Complaints</h3>
+<button  
+    type="button"  
+    class="btn btn-danger"  
+    onclick="showEmergencyConfirmation()" 
+> 
+    🚨 Emergency 
+</button> 
+
+
+</div>  
+
+<h3 class="mt-5">Recent Complaints</h3>  
 
 <% if (complaints.length === 0) { %>
 
-    <p class="text-muted mt-3">
-        No complaints found.
-    </p>
+
+<p class="text-muted mt-3">  
+    No complaints found. 
+</p>  
+
 
 <% } %>
 
 <% complaints.forEach(complaint => { %>
 
-    <div class="card mt-3 dashboard-card">
 
-        <div class="card-body">
+<div class="card mt-3 dashboard-card">  
 
-            <h5><%= complaint.title %></h5>
+    <div class="card-body">  
 
-            <p><%= complaint.location %></p>
+        <h5><%= complaint.title %></h5>  
 
-            <% if (complaint.status === "Resolved") { %>
+        <p><%= complaint.location %></p>  
 
-                <span class="badge bg-success">
-                    Completed
-                </span>
+        <% if (complaint.status === "Resolved") { %>  
 
-            <% } else { %>
+            <span class="badge bg-success">  
+                Completed  
+            </span>  
 
-                <span class="badge bg-warning">
-                    <%= complaint.status %>
-                </span>
+        <% } else { %>  
 
-            <% } %>
+            <span class="badge bg-warning">  
+                <%= complaint.status %>  
+            </span>  
 
-            <a
-                href="/complaints/<%= complaint._id %>"
-                class="btn btn-sm btn-primary ms-2"
-            >
-                View Details
-            </a>
+        <% } %>  
 
-            <% if (complaint.image) { %>
+        <a  
+            href="/complaints/<%= complaint._id %>"  
+            class="btn btn-sm btn-primary ms-2"  
+        >  
+            View Details  
+        </a>  
 
-                <a
-                    href="/complaints/<%= complaint._id %>/photo"
-                    class="btn btn-sm btn-secondary ms-2"
-                >
-                    View Photo
-                </a>
+        <% if (complaint.image) { %>  
 
-            <% } %>
+            <a  
+                href="/complaints/<%= complaint._id %>/photo"  
+                class="btn btn-sm btn-secondary ms-2"  
+            >  
+                View Photo  
+            </a>  
 
-        </div>
+        <% } %>  
 
-    </div>
+    </div>  
+
+</div>  
+
 
 <% }) %>
 
-</div>
+</div> 
+
+<script> 
+    function showEmergencyConfirmation() { 
+        const firstConfirm = confirm( 
+            "🚨 Are you sure this is an emergency?" 
+        ); 
+ 
+        if (!firstConfirm) { 
+            return; 
+        } 
+ 
+        const secondConfirm = confirm( 
+            "⚠️ False emergency reports may result in disciplinary action or a fine.\n\nDo you want to continue?" 
+        ); 
+ 
+        if (!secondConfirm) { 
+            return; 
+        } 
+ 
+        fetch("/emergency", { 
+            method: "POST" 
+        }) 
+        .then(async response => { 
+            const data = await response.json(); 
+ 
+            if (!response.ok) { 
+                throw new Error(data.message || "Emergency request failed"); 
+            } 
+ 
+            return data; 
+        }) 
+        .then(data => { 
+            alert("🚨 Emergency reported successfully."); 
+        }) 
+        .catch(error => { 
+            console.log("Emergency error:", error); 
+            alert("Emergency failed: " + error.message); 
+        }); 
+    } 
+</script> 
 
 <%- include("../includes/footer.ejs") %>
