@@ -92,8 +92,18 @@ router.post("/login", wrapAsync(async (req, res) => {
 
     }
 
+    if (typeof studentId !== "string" || typeof password !== "string") {
+
+        req.session.loginError = "Invalid ID or password";
+
+        return res.redirect("/login");
+
+    }
+
     const user = await User.findOne({
-        studentId: studentId
+        studentId: {
+            $eq: studentId
+        }
     });
 
     if (!user) {
