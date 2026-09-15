@@ -1,29 +1,14 @@
 const express = require("express");
 const router = express.Router();
 
-const mongoose = require("mongoose");
-const path = require("path");
-const fs = require("fs");
-
+const User = require("../models/user");
 const Complaint = require("../models/complaint");
-const wrapAsync = require("../utils/wrapAsync");
-const ExpressError = require("../utils/ExpressError");
-const Joi = require("joi");
+const Emergency = require("../models/emergency");
 
-const complaintUpdateSchema = Joi.object({
-
-    department: Joi.string().required(),
-
-    status: Joi.string()
-        .valid("Pending", "Assigned", "In Progress", "Resolved")
-        .required()
-
-});
-
-
-router.get("/", wrapAsync(async (req, res) => {
+router.get("/", async (req, res) => {
 
     const complaints = await Complaint.find({});
+    const emergencies = await Emergency.find({});
 
     const totalComplaints = complaints.length;
 
@@ -41,100 +26,100 @@ router.get("/", wrapAsync(async (req, res) => {
 
     res.render("data/adminDashboard", {
         complaints,
+        emergencies,
         totalComplaints,
         pendingComplaints,
         inProgressComplaints,
         resolvedComplaints
     });
 
-}));
+});
 
+router.get("/complaints/:id", async (req, res) => {
 
-router.get("/complaints/:id", wrapAsync(async (req, res) => {
-
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ExpressError(400, "Invalid complaint ID");
-    }
-
-    const complaint = await Complaint.findById(id);
+    const complaint = await Complaint.findById(req.params.id);
 
     if (!complaint) {
-        throw new ExpressError(404, "Complaint not found");
+        return res.status(404).send("Complaint not found");
     }
 
-    res.render("data/editComplaint", { complaint });
-
-}));
-
-
-router.patch("/complaints/:id", wrapAsync(async (req, res) => {
-
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ExpressError(400, "Invalid complaint ID");
-    }
-
-    const { department, status } = req.body;
-
-    const { error } = complaintUpdateSchema.validate({
-        department,
-        status
+    const student = await User.findOne({
+        studentId: complaint.studentId
     });
 
-    if (error) {
-        throw new ExpressError(400, error.details[0].message);
+    if (!student) {
+        return res.status(404).send("Student not found");
     }
 
+    res.render("data/complaintDetails", {
+        complaint,
+        student
+    });
+
+});
+
+router.get("/complaints/:id/edit", async (req, res) => {
+
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+        return res.status(404).send("Complaint not found");
+    }
+
+    const student = await User.findOne({
+        studentId: complaint.studentId
+    });
+
+    if (!student) {
+        return res.status(404).send("Student not found");
+    }
+
+    res.render("data/editComplaint", {
+        complaint,
+        student
+    });
+
+});
+
+router.patch("/complaints/:id", async (req, res) => {
+
+    const {
+        department,
+        status
+    } = req.body;
+
     const complaint = await Complaint.findByIdAndUpdate(
-        id,
+        req.params.id,
         {
-            department,
-            status
+            department: department,
+            status: status
         },
-        { new: true }
+        {
+            new: true,
+            runValidators: true
+        }
     );
 
     if (!complaint) {
-        throw new ExpressError(404, "Complaint not found");
+        return res.status(404).send("Complaint not found");
     }
 
-    res.redirect("/admin");
+    res.redirect("/admin/complaints/" + complaint._id + "/edit");
 
-}));
+});
 
+router.delete("/complaints/:id", async (req, res) => {
 
-router.delete("/complaints/:id", wrapAsync(async (req, res) => {
-
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ExpressError(400, "Invalid complaint ID");
-    }
-
-    const complaint = await Complaint.findById(id);
+    const complaint = await Complaint.findByIdAndDelete(
+        req.params.id
+    );
 
     if (!complaint) {
-        throw new ExpressError(404, "Complaint not found");
+        return res.status(404).send("Complaint not found");
     }
-
-    if (complaint.image) {
-
-        const imagePath = path.join(__dirname, "..", "public", complaint.image);
-
-        if (fs.existsSync(imagePath)) {
-            fs.unlinkSync(imagePath);
-        }
-
-    }
-
-    await Complaint.findByIdAndDelete(id);
 
     res.redirect("/admin");
 
-}));
-
+});
 
 module.exports = router;

@@ -1,105 +1,123 @@
 <%- include("../includes/head.ejs") %>
-<%- include("../includes/navbar.ejs") %>
+    <%- include("../includes/navbar.ejs") %>
 
-<link rel="stylesheet" href="/adminDashboard.css">
+        <link rel="stylesheet" href="/adminDashboard.css">
 
-<div class="container mt-5">
-    
-<h1>Admin Dashboard</h1>
+        <div class="container mt-5">
 
-<div class="row mt-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Admin Dashboard</h1>
 
-    <div class="col-md-3">
-        <div class="card admin-card">
-            <div class="card-body">
-                <h5>Total</h5>
-                <h2><%= totalComplaints %></h2>
+                <a href="/register" class="btn btn-primary">
+                    Add Student
+                </a>
             </div>
-        </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card admin-card">
-            <div class="card-body">
-                <h5>Pending</h5>
-                <h2><%= pendingComplaints %></h2>
+            <div class="row mt-4">
+
+                <div class="col-md-3">
+                    <div class="card admin-card">
+                        <div class="card-body">
+                            <h5>Total</h5>
+                            <h2>
+                                <%= totalComplaints %>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card admin-card">
+                        <div class="card-body">
+                            <h5>Pending</h5>
+                            <h2>
+                                <%= pendingComplaints %>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card admin-card">
+                        <div class="card-body">
+                            <h5>In Progress</h5>
+                            <h2>
+                                <%= inProgressComplaints %>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card admin-card">
+                        <div class="card-body">
+                            <h5>Resolved</h5>
+                            <h2>
+                                <%= resolvedComplaints %>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-        </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card admin-card">
-            <div class="card-body">
-                <h5>In Progress</h5>
-                <h2><%= inProgressComplaints %></h2>
+            <h3 class="mt-5">Complaints</h3>
+
+            <div class="table-container mt-3">
+
+                <table class="table align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Complaint ID</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <% complaints.forEach(complaint=> { %>
+
+                            <tr>
+
+                                <td>
+                                    <%= complaint.complaintId %>
+                                </td>
+
+                                <td>
+                                    <%= complaint.title %>
+                                </td>
+
+                                <td>
+                                    <%= complaint.category %>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-warning status-badge">
+                                        <%= complaint.status %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <a href="/admin/complaints/<%= complaint._id %>/edit"
+                                        class="btn btn-sm btn-primary">
+                                        Manage
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                            <% }) %>
+
+                    </tbody>
+
+                </table>
+
             </div>
+
         </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card admin-card">
-            <div class="card-body">
-                <h5>Resolved</h5>
-                <h2><%= resolvedComplaints %></h2>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<h3 class="mt-5">Complaints</h3>
-
-<div class="table-container mt-3">
-
-    <table class="table align-middle">
-
-        <thead>
-            <tr>
-                <th>Complaint ID</th>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            <% complaints.forEach(complaint => { %>
-
-                <tr>
-
-                    <td><%= complaint._id %></td>
-
-                    <td><%= complaint.title %></td>
-
-                    <td><%= complaint.category %></td>
-
-                    <td>
-                        <span class="badge bg-warning status-badge">
-                            <%= complaint.status %>
-                        </span>
-                    </td>
-
-                    <td>
-                        <a
-                            href="/admin/complaints/<%= complaint._id %>"
-                            class="btn btn-sm btn-primary"
-                        >
-                            Manage
-                        </a>
-                    </td>
-
-                </tr>
-
-            <% }) %>
-
-        </tbody>
-
-    </table>
-
-</div>
-
-</div>
-
-<%- include("../includes/footer.ejs") %>
+        <%- include("../includes/footer.ejs") %>

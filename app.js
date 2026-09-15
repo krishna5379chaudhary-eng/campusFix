@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 
 const app = express();
@@ -21,6 +22,9 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo").MongoStore;
 
 const { requireAdmin } = require("./middleware/auth");
+const emergencyRouter = require("./routes/emergency");
+const adminSetupRouter = require("./routes/adminSetup");
+const forgotPasswordRouter = require("./routes/forgotPassword");
 
 
 app.set("view engine", "ejs");
@@ -59,6 +63,10 @@ app.use(session({
     }
 
 }));
+
+app.use("/emergency", emergencyRouter);
+app.use("/admin-setup", adminSetupRouter);
+app.use("/forgot-password", forgotPasswordRouter);
 
 
 main()

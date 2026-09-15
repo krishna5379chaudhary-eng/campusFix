@@ -1,54 +1,100 @@
 <%- include("../includes/head.ejs") %>
 
-<div class="container mt-5">
+    <div class="container mt-5">
 
-    <div class="row justify-content-center">
+        <div class="row justify-content-center">
 
-        <div class="col-md-5">
+            <div class="col-md-5">
 
-            <div class="card p-4">
+                <div class="card p-4">
 
-                <h2 class="text-center mb-4">CampusFix Login</h2>
+                    <h2 class="text-center mb-4">CampusFix Login</h2>
 
-                <form action="/login" method="POST">
+                    <% if (error) { %>
 
-                    <div class="mb-3">
+                        <div class="alert alert-danger text-center">
+                            <%= error %>
+                        </div>
 
-                        <label class="form-label">
-                            Student ID / Admin ID
-                        </label>
+                    <% } %>
 
-                        <input
-                            type="text"
-                            name="studentId"
-                            class="form-control"
-                            required
-                        >
+                    <form action="/login" method="POST">
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Student ID / Admin ID
+                            </label>
+
+                            <input
+                                type="text"
+                                name="studentId"
+                                class="form-control"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Password
+                            </label>
+
+                            <div class="input-group">
+
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    class="form-control"
+                                    required
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="togglePassword()"
+                                >
+                                    👁
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <script>
+                            function togglePassword() {
+
+                                const password =
+                                    document.getElementById("password");
+
+                                if (password.type === "password") {
+                                    password.type = "text";
+                                } else {
+                                    password.type = "password";
+                                }
+
+                            }
+                        </script>
+
+
+                        <button class="btn btn-primary w-100">
+                            Login
+                        </button>
+
+                    </form>
+
+                    <div class="text-center mt-3">
+
+                        <a href="/forgot-password">
+                            Forgot Password?
+                        </a>
 
                     </div>
 
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-                            Password
-                        </label>
-
-                        <input
-                            type="password"
-                            name="password"
-                            class="form-control"
-                            required
-                        >
-
-                    </div>
-
-
-                    <button class="btn btn-primary w-100">
-                        Login
-                    </button>
-
-                </form>
+                </div>
 
             </div>
 
@@ -56,6 +102,4 @@
 
     </div>
 
-</div>
-
-<%- include("../includes/footer.ejs") %>
+    <%- include("../includes/footer.ejs") %>
