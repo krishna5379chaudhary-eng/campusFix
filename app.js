@@ -57,7 +57,7 @@ resave: false,
 saveUninitialized: false,
 
 store: MongoStore.create({
-    mongoUrl: "mongodb://127.0.0.1:27017/campusfix"
+    mongoUrl: process.env.MONGODB_URI
 }),
 
 cookie: {
@@ -81,9 +81,7 @@ console.log("connected db");
 async function main() {
 
 
-await mongoose.connect(
-    "mongodb://127.0.0.1:27017/campusfix"
-);
+await mongoose.connect(process.env.MONGODB_URI);
 
 
 }

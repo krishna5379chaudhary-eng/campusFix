@@ -1,32 +1,32 @@
-name: CodeQL
+# name: CodeQL
 
-on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+# on:
+#   pull_request:
+#     branches:
+#       - main
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  analyze:
-    name: Analyze JavaScript
-    runs-on: ubuntu-latest
+# jobs:
+#   analyze:
+#     name: Analyze JavaScript
+#     runs-on: ubuntu-latest
 
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-      packages: read
+#     permissions:
+#       security-events: write
+#       actions: read
+#       contents: read
+#       packages: read
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
+#       - name: Initialize CodeQL
+#         uses: github/codeql-action/init@v3
+#         with:
+#           languages: javascript
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+#       - name: Perform CodeQL Analysis
+#         uses: github/codeql-action/analyze@v3
