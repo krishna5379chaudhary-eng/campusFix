@@ -7,6 +7,9 @@ const User = require("../models/user");
 
 router.get("/:token", async (req, res) => {
 
+    console.log("URL TOKEN EXISTS:", !!req.params.token);
+    console.log("ENV TOKEN EXISTS:", !!process.env.ADMIN_SETUP_TOKEN);
+
     if (req.params.token !== process.env.ADMIN_SETUP_TOKEN) {
         return res.status(403).send("Invalid admin setup token.");
     }
@@ -24,7 +27,6 @@ router.get("/:token", async (req, res) => {
     res.render("data/adminSetup", {
         token: req.params.token
     });
-
 });
 
 router.post("/:token", async (req, res) => {
